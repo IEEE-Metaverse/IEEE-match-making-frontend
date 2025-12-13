@@ -292,16 +292,24 @@ export default function ChatWindow({ activeUser, messages = [], currentUser, onS
 
         {/* Moderation Warning Banner */}
         {moderationWarning && (
-            <div className="moderation-warning" role="alert">
+            <div className="moderation-warning" role="alert" style={{ display: 'block', zIndex: 1000 }}>
                 <div className="moderation-warning-content">
                     <span className="moderation-warning-icon">⚠️</span>
                     <div className="moderation-warning-text">
                         <strong>Message Blocked</strong>
                         <p>{moderationWarning.reason || "This message violates community guidelines."}</p>
+                        {moderationWarning.content && (
+                            <p style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '0.25rem' }}>
+                                Blocked content: "{moderationWarning.content}"
+                            </p>
+                        )}
                     </div>
                     <button
                         className="moderation-warning-close"
-                        onClick={() => setModerationWarning(null)}
+                        onClick={() => {
+                            console.log("🚫 Closing moderation warning");
+                            setModerationWarning(null);
+                        }}
                         aria-label="Close warning"
                     >
                         ×
