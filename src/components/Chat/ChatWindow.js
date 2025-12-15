@@ -32,6 +32,7 @@ export default function ChatWindow({ activeUser, messages = [], currentUser, onS
     const [localMessages, setLocalMessages] = useState(messages);
     const [moderationWarning, setModerationWarning] = useState(null);
     const messagesEndRef = useRef(null);
+    const messagesListRef = useRef(null); // Ref to the messages-list container
     const socketRef = useRef(null);
     const typingTimeoutRef = useRef(null);
     const previousMessagesLengthRef = useRef(0);
@@ -73,12 +74,17 @@ export default function ChatWindow({ activeUser, messages = [], currentUser, onS
     /**
      * Auto-scroll to bottom when new messages are added or conversation changes
      * Only scrolls if shouldAutoScrollRef is true (prevents unwanted scrolling)
+     * Scrolls within the messages-list container only, not the entire page
      */
     useEffect(() => {
-        if (shouldAutoScrollRef.current && messagesEndRef.current) {
+        if (shouldAutoScrollRef.current && messagesListRef.current) {
             // Use setTimeout to ensure DOM has updated
             setTimeout(() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                // Scroll the messages-list container to bottom, not the entire page
+                const container = messagesListRef.current;
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
                 shouldAutoScrollRef.current = false; // Reset flag after scrolling
             }, 100);
         }
@@ -354,7 +360,7 @@ export default function ChatWindow({ activeUser, messages = [], currentUser, onS
         )}
 
         {/* Messages List */}
-        <div className="messages-list">
+        <div className="messages-list" ref={messagesListRef}>
                 {localMessages.map((msg) => {
                     // Handle both old format (sender: 'me'/'them') and new format (sender: userId)
                     const isSent = msg.sender === currentUser?.id || msg.sender === "me";
