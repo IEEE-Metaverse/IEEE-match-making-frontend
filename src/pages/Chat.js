@@ -279,6 +279,28 @@ export default function Chat() {
                         }
                         
                         console.log("➕ [CHAT] Adding new message to state", { msgId: msg.id, content: msgContent });
+                        
+                        // Double-check: Only add if message belongs to current active conversation
+                        // This prevents messages from other conversations from being added
+                        const belongsToActiveConversation = 
+                            msg.conversation_id === currentActiveConversation?.conversationId ||
+                            (isFromMeAsSender && (
+                                currentActiveConversation?.otherUser?.email?.toLowerCase() === msg.receiver_email?.toLowerCase() ||
+                                currentActiveConversation?.otherUser?.id === msg.receiver_id
+                            )) ||
+                            (isForMeAsReceiver && (
+                                currentActiveConversation?.otherUser?.email?.toLowerCase() === msg.sender_email?.toLowerCase() ||
+                                currentActiveConversation?.otherUser?.id === msg.sender_id
+                            ));
+                        
+                        if (!belongsToActiveConversation) {
+                            console.log("⚠️ [CHAT] Message does not belong to active conversation, skipping", {
+                                msgConversationId: msg.conversation_id,
+                                activeConversationId: currentActiveConversation?.conversationId
+                            });
+                            return prev;
+                        }
+                        
                         return [...prev, {
                             id: msg.id,
                             text: msgContent,

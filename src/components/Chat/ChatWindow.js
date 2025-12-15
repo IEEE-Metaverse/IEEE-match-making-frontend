@@ -34,19 +34,54 @@ export default function ChatWindow({ activeUser, messages = [], currentUser, onS
     const messagesEndRef = useRef(null);
     const socketRef = useRef(null);
     const typingTimeoutRef = useRef(null);
+    const previousMessagesLengthRef = useRef(0);
+    const previousActiveUserIdRef = useRef(null);
+    const shouldAutoScrollRef = useRef(false); // Track if we should auto-scroll
 
     /**
      * Sync local messages when prop changes
      */
     useEffect(() => {
+        const previousLength = previousMessagesLengthRef.current;
+        const currentLength = messages.length;
+        const currentActiveUserId = activeUser?.id || activeUser?.email;
+        const previousActiveUserId = previousActiveUserIdRef.current;
+        
+        // Check if conversation changed
+        const conversationChanged = currentActiveUserId !== previousActiveUserId;
+        
+        // Only auto-scroll if:
+        // 1. New message added (length increased) - user sent/received a message
+        // 2. Conversation changed (switched to different user) - scroll to show their messages
+        // Don't scroll if just viewing existing messages without changes
+        if (conversationChanged) {
+            // Conversation switched - scroll to bottom to show latest messages
+            shouldAutoScrollRef.current = true;
+            previousActiveUserIdRef.current = currentActiveUserId;
+        } else if (currentLength > previousLength) {
+            // New message added - scroll to show it
+            shouldAutoScrollRef.current = true;
+        } else {
+            // Just viewing existing messages - don't scroll
+            shouldAutoScrollRef.current = false;
+        }
+        
+        previousMessagesLengthRef.current = currentLength;
         setLocalMessages(messages);
-    }, [messages]);
+    }, [messages, activeUser]);
 
     /**
-     * Auto-scroll to bottom when messages update
+     * Auto-scroll to bottom when new messages are added or conversation changes
+     * Only scrolls if shouldAutoScrollRef is true (prevents unwanted scrolling)
      */
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (shouldAutoScrollRef.current && messagesEndRef.current) {
+            // Use setTimeout to ensure DOM has updated
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                shouldAutoScrollRef.current = false; // Reset flag after scrolling
+            }, 100);
+        }
     }, [localMessages]);
 
     /**
